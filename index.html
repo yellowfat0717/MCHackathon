@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>學習網站首頁</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 30px;
+      font-size: 2.2rem;
+      color: #333;
+    }
+    .button {
+      display: block;
+      width: 200px;
+      padding: 15px;
+      margin: 10px;
+      font-size: 1.2rem;
+      background-color: #4f46e5;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+    .button:hover {
+      background-color: #4338ca;
+    }
+    input[type="file"] {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📘 學習網站首頁</h1>
+
+  <a href="#" class="button">錯題分析</a>
+  <a href="#" class="button">自主學習</a>
+  <a href="#" class="button">聯絡簿</a>
+  <a href="#" class="button">報到系統</a>
+  <a href="#" class="button">教師請假</a>
+
+  <input type="file" id="fileInput" />
+  <button onclick="uploadFile()">上傳試卷</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjiZf6SXQpbXtZsWzefNQmh9gQKtIxM4k",
+      authDomain: "mchackathon-36970.firebaseapp.com",
+      databaseURL: "https://mchackathon-36970-default-rtdb.firebaseio.com",
+      projectId: "mchackathon-36970",
+      storageBucket: "mchackathon-36970.appspot.com",
+      messagingSenderId: "132320531275",
+      appId: "1:132320531275:web:c8582e112163670f784ece",
+      measurementId: "G-FGQYWXTKE0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const storage = getStorage(app);
+
+    window.uploadFile = async function () {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("請選擇一個檔案");
+
+      const storageRef = ref(storage, 'exams/' + file.name);
+
+      try {
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        alert("✅ 上傳成功！下載連結：\n" + downloadURL);
+        console.log("File available at:", downloadURL);
+      } catch (err) {
+        console.error(err);
+        alert("❌ 上傳失敗：" + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
