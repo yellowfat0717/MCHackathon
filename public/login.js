@@ -65,20 +65,35 @@ onAuthStateChanged(auth, async (user) => {
 // ✅ 登入/註冊表單
 function renderLoginForm(container) {
   container.innerHTML = `
-    <select id="role" class="input">
-      <option value="">請選擇身分</option>
-      <option value="student">學生</option>
-      <option value="teacher">老師</option>
-      <option value="parent">家長</option>
-    </select><br>
-    <input type="email" id="email" class="input" placeholder="Email"><br>
-    <input type="password" id="password" class="input" placeholder="密碼"><br>
-    <div>
-      <button class="btn" id="loginBtn">登入</button>
-      <button class="btn" id="signupBtn">註冊</button>
-      <button class="btn" id="googleLoginBtn">使用 Google 登入</button>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-indigo-200">
+      <div class="bg-white shadow-xl rounded-lg w-full max-w-md p-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">🔑 登入系統</h2>
+        
+        <label class="block mb-2 text-gray-700 font-medium">身份</label>
+        <select id="role" class="w-full mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+          <option value="">請選擇身分</option>
+          <option value="student">學生</option>
+          <option value="teacher">老師</option>
+          <option value="parent">家長</option>
+        </select>
+
+        <label class="block mb-2 text-gray-700 font-medium">Email</label>
+        <input type="email" id="email" class="w-full mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="輸入 Email">
+
+        <label class="block mb-2 text-gray-700 font-medium">密碼</label>
+        <input type="password" id="password" class="w-full mb-6 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none" placeholder="輸入密碼">
+
+        <div class="flex flex-col gap-3">
+          <button id="loginBtn" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">登入</button>
+          <button id="signupBtn" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition">註冊</button>
+          <button id="googleLoginBtn" class="w-full bg-red-500 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-red-600 transition">
+            <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" class="w-5 h-5"> 使用 Google 登入
+          </button>
+        </div>
+
+        <p id="result" class="mt-4 text-center text-sm font-medium"></p>
+      </div>
     </div>
-    <p id="result"></p>
   `;
 
   const resultEl = document.getElementById("result");
@@ -153,20 +168,30 @@ function renderLoginForm(container) {
 // ✅ 個人檔案設定 (姓名輸入)
 function renderProfileSetup(container, user, role) {
   container.innerHTML = `
-    <h2>👤 建立個人檔案</h2>
-    <p>Email: ${user.email}</p>
-    ${
-      !role
-        ? `<select id="roleSelect" class="input">
-            <option value="">請選擇身分</option>
-            <option value="student">學生</option>
-            <option value="teacher">老師</option>
-            <option value="parent">家長</option>
-          </select><br>`
-        : `<p>角色：${role}</p>`
-    }
-    <input id="nameInput" class="input" placeholder="輸入姓名"><br>
-    <button id="saveProfileBtn" class="btn">儲存</button>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-green-100 to-teal-200">
+      <div class="bg-white shadow-xl rounded-lg w-full max-w-md p-8">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">👤 建立個人檔案</h2>
+        
+        <p class="text-gray-600 mb-4">Email: <span class="font-medium">${user.email}</span></p>
+
+        ${
+          !role
+            ? `<label class="block mb-2 text-gray-700 font-medium">身份</label>
+               <select id="roleSelect" class="w-full mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:outline-none">
+                 <option value="">請選擇身分</option>
+                 <option value="student">學生</option>
+                 <option value="teacher">老師</option>
+                 <option value="parent">家長</option>
+               </select>`
+            : `<p class="text-gray-700 mb-4">角色：<span class="font-semibold">${role}</span></p>`
+        }
+
+        <label class="block mb-2 text-gray-700 font-medium">姓名</label>
+        <input id="nameInput" class="w-full mb-6 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-400 focus:outline-none" placeholder="輸入姓名">
+
+        <button id="saveProfileBtn" class="w-full bg-teal-500 text-white py-2 rounded-lg hover:bg-teal-600 transition">儲存</button>
+      </div>
+    </div>
   `;
 
   document.getElementById("saveProfileBtn").onclick = async () => {
@@ -190,5 +215,6 @@ function renderProfileSetup(container, user, role) {
     renderDashboard(container, user);
   };
 }
+
 
 export { renderLoginForm };
