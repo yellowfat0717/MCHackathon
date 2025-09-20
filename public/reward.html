@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>點數商城 Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+
+  <!-- 學生點數 -->
+  <div class="bg-white shadow-md rounded-lg p-4 w-full max-w-md text-center mb-6">
+    <h2 class="text-xl font-bold text-indigo-600">我的點數</h2>
+    <p id="pointsDisplay" class="text-2xl font-mono text-yellow-600 mt-2">120</p>
+  </div>
+
+  <!-- 可兌換品項 -->
+  <div class="bg-white shadow-md rounded-lg p-4 w-full max-w-md">
+    <h2 class="text-lg font-semibold mb-4">可兌換品項</h2>
+    <div class="space-y-4">
+
+      <!-- 品項 1 -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <span>🎁 鉛筆 (50 點)</span>
+        <button class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">兌換</button>
+      </div>
+
+      <!-- 品項 2 -->
+      <div class="flex justify-between items-center border-b pb-2">
+        <span>🍬 糖果 (30 點)</span>
+        <button class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">兌換</button>
+      </div>
+
+      <!-- 品項 3 -->
+      <div class="flex justify-between items-center">
+        <span>📕 筆記本 (80 點)</span>
+        <button class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">兌換</button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

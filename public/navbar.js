@@ -1,5 +1,5 @@
+// navbar.js
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
-import { checkUpcomingEvents } from "./calendar.js"; // 🔔 匯入行事曆提醒
 
 // 匯出函式
 export function loadNavbar(auth, user) {
@@ -35,18 +35,12 @@ export function loadNavbar(auth, user) {
             ? `<button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded-lg transition">登出</button>`
             : ""
         }
-      <div style="display:flex; align-items:center; gap:15px; padding-right:30px;">
-        <span id="datetime"></span>
-        ${user ? `<span>👤 ${displayName}（${role}）</span>` : ""}
-        <a href="chatroom.html">聊天室</a>
-        <button id="bellBtn">🔔 提醒</button>
-        ${user ? `<button id="logoutBtn">登出</button>` : ""}
       </div>
     </nav>
     <div class="h-16"></div> <!-- 增加空白，避免內容被 navbar 蓋住 -->
   `;
 
-  // 🚪 登出功能
+  // 登出功能
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
@@ -56,15 +50,7 @@ export function loadNavbar(auth, user) {
     });
   }
 
-  // 🔔 鈴鐺提醒
-  const bellBtn = document.getElementById("bellBtn");
-  if (bellBtn) {
-    bellBtn.addEventListener("click", async () => {
-      await checkUpcomingEvents(3); // 預設檢查 3 天內的事件
-    });
-  }
-
-  // ⏰ 每秒更新時間
+  // 每秒更新時間
   function updateDateTime() {
     const now = new Date();
     const formatted = now.toLocaleString("zh-TW", {
