@@ -5,6 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebas
 import {
   getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, // ✨ 新增
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
@@ -20,7 +21,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // ✅ 設定持久性為「session」
-// 👉 使用者關掉分頁或 Ctrl+F5 強制刷新，就會自動登出
 setPersistence(auth, browserSessionPersistence)
   .then(() => {
     console.log("✅ 登入狀態只會在這次瀏覽器 session 保存");
@@ -41,7 +41,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ✅ 建立登入畫面
+// ✅ 建立登入/註冊畫面
 function renderLoginForm(container) {
   container.innerHTML = `
     <select id="role" class="input">
@@ -52,17 +52,21 @@ function renderLoginForm(container) {
     </select><br>
     <input type="email" id="email" class="input" placeholder="Email"><br>
     <input type="password" id="password" class="input" placeholder="密碼"><br>
-    <button class="btn" id="loginBtn">登入</button>
-    <button class="btn" id="googleLoginBtn">使用 Google 登入</button>
+    <div>
+      <button class="btn" id="loginBtn">登入</button>
+      <button class="btn" id="signupBtn">註冊</button>
+      <button class="btn" id="googleLoginBtn">使用 Google 登入</button>
+    </div>
     <p id="result"></p>
   `;
+
+  const resultEl = document.getElementById("result");
 
   // ✨ Email/Password 登入
   document.getElementById("loginBtn").addEventListener("click", async () => {
     const role = document.getElementById("role").value;
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
-    const resultEl = document.getElementById("result");
 
     if (!role || !email || !password) {
       return alert("請輸入所有欄位");
@@ -70,7 +74,7 @@ function renderLoginForm(container) {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      sessionStorage.setItem("role", role); // ✅ 用 sessionStorage 存角色
+      sessionStorage.setItem("role", role);
       resultEl.textContent = `✅ 登入成功（${role}）`;
       resultEl.style.color = "green";
     } catch (err) {
@@ -79,10 +83,30 @@ function renderLoginForm(container) {
     }
   });
 
+  // ✨ Email/Password 註冊
+  document.getElementById("signupBtn").addEventListener("click", async () => {
+    const role = document.getElementById("role").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!role || !email || !password) {
+      return alert("請輸入所有欄位");
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      sessionStorage.setItem("role", role);
+      resultEl.textContent = `✅ 註冊成功（${role}），已自動登入`;
+      resultEl.style.color = "green";
+    } catch (err) {
+      resultEl.textContent = "❌ 註冊失敗：" + err.message;
+      resultEl.style.color = "red";
+    }
+  });
+
   // ✨ Google 登入
   document.getElementById("googleLoginBtn").addEventListener("click", async () => {
     const role = document.getElementById("role").value;
-    const resultEl = document.getElementById("result");
 
     if (!role) {
       return alert("請選擇身分才能用 Google 登入！");
@@ -93,7 +117,7 @@ function renderLoginForm(container) {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      sessionStorage.setItem("role", role); // ✅ 用 sessionStorage 存角色
+      sessionStorage.setItem("role", role);
       resultEl.textContent = `✅ Google 登入成功：${user.email}，身分：${role}`;
       resultEl.style.color = "green";
     } catch (err) {

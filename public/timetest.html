@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navbar 測試</title>
+  <style>
+    body { margin: 0; font-family: "Noto Sans TC", sans-serif; }
+    nav {
+      width: 100%;
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav a { color: white; margin-left: 15px; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    #datetime { font-size: 0.9rem; color: #ccc; }
+  </style>
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <script>
+    function loadNavbar(user) {
+  // 建立 Navbar 結構
+  document.getElementById("navbar").innerHTML = `
+    <nav>
+      <div><a href="index.html">學習網站</a></div>
+      <div style="display:flex; align-items:center; gap:15px;">
+        <span id="datetime">載入中...</span>
+        <a href="chatroom.html">聊天室</a>
+        <a href="contactbook.html">聯絡簿</a>
+        ${user ? `<button id="logoutBtn">登出</button>` : ""}
+      </div>
+    </nav>
+  `;
+
+  // 綁定登出按鈕
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  }
+
+  // ✅ 每秒更新日期時間
+  function updateDateTime() {
+    const now = new Date();
+    const formatted = now.toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    const datetimeEl = document.getElementById("datetime");
+    if (datetimeEl) datetimeEl.textContent = formatted;
+  }
+
+  updateDateTime(); // 先執行一次
+  setInterval(updateDateTime, 1000); // 每秒更新
+}
+
+  </script>
+</body>
+</html>

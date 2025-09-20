@@ -42,10 +42,6 @@
     #app {
       padding: 20px;
     }
-    #datetime {
-      font-size: 0.9rem;
-      color: #ccc;
-    }
   </style>
 </head>
 <body>
@@ -63,60 +59,64 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
-    // ✅ 匯入你自己定義的功能
+    // ✅ 你的 Firebase 設定
     import { firebaseConfig, renderDashboard } from "./fundamental.js";
     import { renderLoginForm } from "./login.js";
 
-    // ✅ 初始化 Firebase
+    // 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
     const container = document.getElementById("app");
 
-    // ✅ 動態載入 Navbar
+    // ✅ 載入 Navbar
     function loadNavbar(user) {
-      document.getElementById("navbar").innerHTML = `
+  // 建立 Navbar 結構
+    console.log("Navbar 已載入，使用者:", user);
+
+    document.getElementById("navbar").innerHTML = `
         <nav>
-          <div><a href="index.html">學習網站</a></div>
-          <div style="display:flex; align-items:center; gap:15px;">
+        <div><a href="index.html">學習網站</a></div>
+        <div style="display:flex; align-items:center; gap:15px;">
             <span id="datetime">載入中...</span>
             <a href="chatroom.html">聊天室</a>
             <a href="contactbook.html">聯絡簿</a>
             ${user ? `<button id="logoutBtn">登出</button>` : ""}
-          </div>
+        </div>
         </nav>
-      `;
+    `;
 
-      // 綁定登出按鈕
-      const logoutBtn = document.getElementById("logoutBtn");
-      if (logoutBtn) {
+    // 綁定登出按鈕
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
-          await signOut(auth);
-          window.location.href = "login.html";
+        await signOut(auth);
+        window.location.href = "login.html";
         });
-      }
+    }
 
-      // ✅ 每秒更新日期時間
-      function updateDateTime() {
+    // ✅ 每秒更新日期時間
+    function updateDateTime() {
         const now = new Date();
         const formatted = now.toLocaleString("zh-TW", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
         });
         const datetimeEl = document.getElementById("datetime");
         if (datetimeEl) datetimeEl.textContent = formatted;
-      }
-      updateDateTime();
-      setInterval(updateDateTime, 1000);
     }
+
+    updateDateTime(); // 先執行一次
+    setInterval(updateDateTime, 1000); // 每秒更新
+    }
+
 
     // ✅ 根據登入狀態更新畫面
     onAuthStateChanged(auth, (user) => {
-      console.log("Navbar 載入, 使用者:", user);
       loadNavbar(user); // Navbar 永遠存在
       if (user) {
         renderDashboard(container, user);
