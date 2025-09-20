@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>聊天室</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    #messages { height: 70vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+    .message { margin: 5px 0; }
+    .me { text-align: right; color: blue; }
+    .other { text-align: left; color: green; }
+  </style>
+</head>
+<body>
+  <h2>📩 聊天室</h2>
+  <div id="messages"></div>
+  <input id="msgInput" type="text" placeholder="輸入訊息..." />
+  <button id="sendBtn">送出</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+
+    import { firebaseConfig } from "./fundamental.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 取得使用者角色
+    const role = sessionStorage.getItem("role");
+    const user = auth.currentUser;
+
+    // 假設這裡先固定一個對話對象（未來可以做選單）
+    const teacherEmail = "teacher@test.com";
+    const parentEmail = user.email; // 家長登入的信箱
+    const chatId = [teacherEmail, parentEmail].sort().join("_");
+    const chatRef = doc(db, "chats", chatId);
+
+    const messagesDiv = document.getElementById("messages");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // 監聽聊天室訊息
+    onSnapshot(chatRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        messagesDiv.innerHTML = "";
+        data.messages.forEach(m => {
+          const div = document.createElement("div");
+          div.className = "message " + (m.sender === user.email ? "me" : "other");
+          div.textContent = `${m.sender}: ${m.text}`;
+          messagesDiv.appendChild(div);
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+    });
+
+    // 送出訊息
+    sendBtn.onclick = async () => {
+      const text = msgInput.value.trim();
+      if (!text) return;
+      const snap = await getDoc(chatRef);
+
+      let messages = [];
+      if (snap.exists()) {
+        messages = snap.data().messages || [];
+      }
+
+      messages.push({
+        sender: user.email,
+        text,
+        timestamp: new Date().toISOString()
+      });
+
+      await setDoc(chatRef, {
+        participants: [teacherEmail, parentEmail],
+        messages
+      });
+      msgInput.value = "";
+    };
+  </script>
+</body>
+</html>
