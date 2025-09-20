@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import renderContactBook from "./ContactBook.js";
+import renderTutor from "./Tutor.js";
 
 // ✅ Firebase 設定
 export const firebaseConfig = {
@@ -29,7 +30,7 @@ export function renderDashboard(container, user) {
   container.innerHTML = `<p>✅ 歡迎登入，${displayName}（${role}）</p>`;
 
   const features = [
-    "錯題分析",
+    "線上家教系統",
     "行事曆",
     "聯絡簿",
     "報到系統",
@@ -52,6 +53,11 @@ export function renderDashboard(container, user) {
         // 🔑 動態載入 calendar.js
         const { renderCalendar } = await import("./calendar.js");
         renderCalendar(container, user);
+      };
+    } else if (text === "線上家教系統") {
+      btn.onclick = () => {
+        container.innerHTML = "";
+        renderTutor(container, db, user); // ✅ 呼叫家教系統
       };
     } else {
       btn.onclick = () => alert(`👉 尚未實作：${text}`);
