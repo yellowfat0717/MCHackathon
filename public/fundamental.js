@@ -21,10 +21,12 @@ export const db = getFirestore(app);
 
 // ✅ 登入後顯示功能選單
 export function renderDashboard(container, user) {
-  // 👉 從 sessionStorage 拿名字，沒有就用 email
-  const displayName = sessionStorage.getItem("name") || user.email;
+  // 👉 從 sessionStorage 拿名字和角色
+  const displayName = sessionStorage.getItem("name") || user.displayName || user.email;
+  const role = sessionStorage.getItem("role") || "未設定角色";
 
-  container.innerHTML = `<p>✅ 歡迎登入，${displayName}</p>`;
+  // 顯示使用者資訊
+  container.innerHTML = `<p>✅ 歡迎登入，${displayName}（${role}）</p>`;
 
   const features = [
     "錯題分析",

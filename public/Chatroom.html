@@ -94,7 +94,7 @@
           messagesDiv.innerHTML = "";
           data.messages.forEach(m => {
             const div = document.createElement("div");
-            div.className = "message " + (m.sender === currentUser.email ? "me" : "other");
+            div.className = "message " + (m.sender === currentUser.name ? "me" : "other");
             div.textContent = `${m.sender}: ${m.text}`;
             messagesDiv.appendChild(div);
           });

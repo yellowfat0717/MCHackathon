@@ -48,13 +48,13 @@ onAuthStateChanged(auth, async (user) => {
         // 沒有名字 → 要求輸入
         renderProfileSetup(appDiv, user, data.role);
       } else {
-        // 有名字 → 直接進 Dashboard
+        // 有完整資料 → 直接進 Dashboard
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("name", data.name);
         renderDashboard(appDiv, user);
       }
     } else {
-      // 第一次完全沒紀錄 → 要求輸入角色與名字
+      // 第一次登入 (Firestore 沒資料) → 要求輸入角色和名字
       renderProfileSetup(appDiv, user, null);
     }
   } else {
@@ -108,10 +108,12 @@ function renderLoginForm(container) {
 
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
+      // 註冊 → 建立 Firestore 紀錄
       await setDoc(doc(db, "users", cred.user.uid), {
+        uid: cred.user.uid,
         email,
         role,
-        name: "" // 註冊後要求輸入
+        name: "" // 先空白，之後要求輸入
       });
       resultEl.textContent = `✅ 註冊成功 (${role})，請輸入姓名`;
       resultEl.style.color = "green";
@@ -131,13 +133,15 @@ function renderLoginForm(container) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // ✅ 寫入 Firestore
       await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
         email: user.email,
         role,
-        name: ""
+        name: user.displayName || "" // 先存 Google 提供的名字
       }, { merge: true });
 
-      resultEl.textContent = `✅ Google 登入成功：${user.email} (${role})`;
+      resultEl.textContent = `✅ Google 登入成功：${user.displayName || user.email} (${role})`;
       resultEl.style.color = "green";
     } catch (err) {
       resultEl.textContent = "❌ Google 登入失敗：" + err.message;
@@ -173,6 +177,7 @@ function renderProfileSetup(container, user, role) {
     if (!finalRole) return alert("請選擇角色");
 
     await setDoc(doc(db, "users", user.uid), {
+      uid: user.uid,
       email: user.email,
       role: finalRole,
       name

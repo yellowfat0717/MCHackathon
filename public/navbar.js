@@ -5,6 +5,10 @@ import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.5.2/fire
 export function loadNavbar(auth, user) {
   const navbarContainer = document.getElementById("navbar");
 
+  // 從 sessionStorage 取名字和角色
+  const displayName = sessionStorage.getItem("name") || user?.displayName || user?.email || "訪客";
+  const role = sessionStorage.getItem("role") || "未設定角色";
+
   navbarContainer.innerHTML = `
     <nav>
       <div style="display:flex; align-items:center; gap:15px;">
@@ -13,8 +17,8 @@ export function loadNavbar(auth, user) {
       </div>
       <div style="display:flex; align-items:center; gap:15px; padding-right:30px;">
         <span id="datetime"></span>
+        ${user ? `<span>👤 ${displayName}（${role}）</span>` : ""}
         <a href="chatroom.html">聊天室</a>
-        <a href="contactbook.html">聯絡簿</a>
         ${user ? `<button id="logoutBtn">登出</button>` : ""}
       </div>
     </nav>
@@ -25,6 +29,7 @@ export function loadNavbar(auth, user) {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
+      sessionStorage.clear(); // ✅ 登出後清掉暫存
       window.location.href = "index.html";
     });
   }
