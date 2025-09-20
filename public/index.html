@@ -70,7 +70,7 @@
     import { loadNavbar } from "./navbar.js";
 
     import { renderCalendar } from "./calendar.js";
-
+    import { checkUpcomingEvents } from "./calendar.js"; // ✅ 記得加這行
     // ✅ 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -84,6 +84,9 @@
 
       if (user) {
         renderDashboard(container, user);
+        // ✅ 一登入就檢查行事曆
+        checkUpcomingEvents(3); // 預設檢查 3 天內的事件
+
       } else {
         renderLoginForm(container);
       }

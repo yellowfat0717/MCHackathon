@@ -53,72 +53,66 @@ export async function renderCalendar(container, user) {
   backBtn.onclick = () => renderDashboard(container, user);
   container.appendChild(backBtn);
 
-  // 讀取角色
+  // 判斷角色
   const role = sessionStorage.getItem("role");
-  console.log("🔑 行事曆角色:", role);
-
   if (role === "teacher") {
     await renderTeacherCalendar(container, user);
   } else {
     await renderStudentParentCalendar(container);
   }
+
+  // 📢 登入後自動檢查提醒
+  checkUpcomingEvents();
 }
 
 // 👨‍🏫 老師行事曆
 async function renderTeacherCalendar(container, user) {
   await seedOfficialEvents();
 
-  const today = getToday();
-  let html = `<h2>📅 重要行事曆</h2><ul>`;
-
-  const q = query(collection(db, "calendar"), orderBy("date"));
-  const querySnapshot = await getDocs(q);
-
-  if (querySnapshot.empty) {
-    html += `<li>目前沒有事件</li>`;
-  } else {
-    querySnapshot.forEach((docSnap) => {
-      const ev = docSnap.data();
-      const isToday = ev.date === today;
-
-      // 每個事件項目
-      html += `<li style="${isToday ? "color:red;font-weight:bold" : ""}">
-        ${ev.date} - ${ev.title} ${isToday ? " ⏰ (今天)" : ""}`;
-
-      // ➖ 刪除按鈕（僅限自訂事件）
-      if (ev.source === "custom") {
-        html += ` <button class="btn" data-id="${docSnap.id}" data-title="${ev.title}">刪除</button>`;
-      }
-
-      html += `</li>`;
-    });
-  }
-
-  html += `</ul>`;
   const wrapper = document.createElement("div");
-  wrapper.innerHTML = html;
+  wrapper.innerHTML = `<h2>📅 重要行事曆</h2><ul id="eventList"></ul>`;
   container.appendChild(wrapper);
 
-  // 綁定刪除按鈕事件（加上確認）
-  wrapper.querySelectorAll("button[data-id]").forEach((btn) => {
-    btn.onclick = async () => {
-      const id = btn.getAttribute("data-id");
-      const title = btn.getAttribute("data-title");
+  const listEl = wrapper.querySelector("#eventList");
 
-      // 🔔 確認視窗
-      if (!confirm(`確定要刪除「${title}」這個事件嗎？`)) {
-        return;
-      }
+  // 📌 載入清單
+  async function loadEvents() {
+    listEl.innerHTML = "";
+    const today = getToday();
 
-      try {
-        await deleteDoc(doc(db, "calendar", id));
-        console.log("🗑 已刪除事件:", id);
-        renderTeacherCalendar(container, user); // 刷新列表
-      } catch (err) {
-        alert("❌ 刪除失敗：" + err.message);
-      }
-    };
-  });
+    const q = query(collection(db, "calendar"), orderBy("date"));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      listEl.innerHTML = `<li>目前沒有事件</li>`;
+    } else {
+      querySnapshot.forEach((docSnap) => {
+        const ev = docSnap.data();
+        const isToday = ev.date === today;
+
+        const li = document.createElement("li");
+        li.style = isToday ? "color:red;font-weight:bold" : "";
+        li.textContent = `${ev.date} - ${ev.title}${isToday ? " ⏰ (今天)" : ""}`;
+
+        // ➖ 刪除按鈕（僅限自訂事件）
+        if (ev.source === "custom") {
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn";
+          delBtn.textContent = "刪除";
+          delBtn.onclick = async () => {
+            if (!confirm(`確定要刪除「${ev.title}」嗎？`)) return;
+            await deleteDoc(doc(db, "calendar", docSnap.id));
+            await loadEvents(); // 🔄 即時刷新
+          };
+          li.appendChild(delBtn);
+        }
+
+        listEl.appendChild(li);
+      });
+    }
+  }
+
+  await loadEvents();
 
   // ➕ 新增表單
   const form = document.createElement("div");
@@ -147,7 +141,12 @@ async function renderTeacherCalendar(container, user) {
       await addCalendarEvent(date, title, "custom");
       resultEl.textContent = "✅ 新增成功！";
       resultEl.style.color = "green";
-      setTimeout(() => renderTeacherCalendar(container, user), 800);
+
+      // 清空輸入欄
+      form.querySelector("#eventDate").value = "";
+      form.querySelector("#eventTitle").value = "";
+
+      await loadEvents(); // 🔄 即時刷新
     } catch (err) {
       console.error("❌ 新增事件失敗:", err);
       resultEl.textContent = "❌ 新增失敗：" + err.message;
@@ -160,36 +159,119 @@ async function renderTeacherCalendar(container, user) {
 async function renderStudentParentCalendar(container) {
   await seedOfficialEvents();
 
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = `<h2>📅 重要行事曆</h2><ul id="eventList"></ul>`;
+  container.appendChild(wrapper);
+
+  const listEl = wrapper.querySelector("#eventList");
   const today = getToday();
-  let html = `<h2>📅 重要行事曆</h2><ul>`;
 
   const q = query(collection(db, "calendar"), orderBy("date"));
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    html += `<li>目前沒有事件</li>`;
+    listEl.innerHTML = `<li>目前沒有事件</li>`;
   } else {
     querySnapshot.forEach((docSnap) => {
       const ev = docSnap.data();
       const isToday = ev.date === today;
-      html += `<li style="${isToday ? "color:red;font-weight:bold" : ""}">
-        ${ev.date} - ${ev.title} ${isToday ? " ⏰ (今天)" : ""}
-      </li>`;
+
+      const li = document.createElement("li");
+      li.style = isToday ? "color:red;font-weight:bold" : "";
+      li.textContent = `${ev.date} - ${ev.title}${isToday ? " ⏰ (今天)" : ""}`;
+      listEl.appendChild(li);
     });
   }
-
-  html += `</ul>`;
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = html;
-  container.appendChild(wrapper);
 }
 
 // ✅ Firestore 新增事件
 export async function addCalendarEvent(date, title, source = "custom") {
-  await addDoc(collection(db, "calendar"), {
+  return await addDoc(collection(db, "calendar"), {
     date,
     title,
     source, // "official" or "custom"
     createdAt: serverTimestamp()
   });
+}
+
+// 🔔 檢查即將到期的事件（顯示在網站內）
+export async function checkUpcomingEvents(days = 3) {
+  const today = new Date();
+  const targetDate = new Date();
+  targetDate.setDate(today.getDate() + days);
+
+  const q = query(collection(db, "calendar"), orderBy("date"));
+  const snapshot = await getDocs(q);
+
+  let reminders = [];
+
+  snapshot.forEach((docSnap) => {
+    const ev = docSnap.data();
+    const evDate = new Date(ev.date);
+
+    if (evDate >= today && evDate <= targetDate) {
+      reminders.push(`${ev.date} - ${ev.title} 即將到期！（${days} 天內）`);
+    }
+  });
+
+  if (reminders.length > 0) {
+    showReminderPopup(reminders);
+  }
+}
+
+// ✅ 在網頁上插入提醒框 (toast)
+function showReminderPopup(messages) {
+  // 如果已經有提醒框，先移除
+  const oldPopup = document.getElementById("reminderPopup");
+  if (oldPopup) oldPopup.remove();
+
+  const popup = document.createElement("div");
+  popup.id = "reminderPopup";
+  popup.style.position = "fixed";
+  popup.style.top = "20px";
+  popup.style.right = "-400px"; // 從右邊滑入
+  popup.style.padding = "15px";
+  popup.style.backgroundColor = "#fef3c7";
+  popup.style.border = "1px solid #f59e0b";
+  popup.style.borderRadius = "8px";
+  popup.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+  popup.style.zIndex = "9999";
+  popup.style.color = "#92400e";
+  popup.style.fontSize = "1rem";
+  popup.style.transition = "right 0.5s ease";
+
+  // 內容
+  popup.innerHTML = `
+    <strong>📅 行事曆提醒</strong>
+    <ul style="margin-top:8px; padding-left:20px;">
+      ${messages.map((m) => `<li>${m}</li>`).join("")}
+    </ul>
+    <button id="closeReminderBtn" style="
+      margin-top:10px;
+      padding:5px 10px;
+      background:#f59e0b;
+      color:white;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    ">關閉</button>
+  `;
+
+  document.body.appendChild(popup);
+
+  // 滑入效果
+  setTimeout(() => {
+    popup.style.right = "20px";
+  }, 50);
+
+  // 關閉事件
+  document.getElementById("closeReminderBtn").onclick = () => {
+    popup.remove();
+  };
+
+  // ⏳ 自動 10 秒後消失（滑出）
+  setTimeout(() => {
+    popup.style.right = "-400px";
+    setTimeout(() => popup.remove(), 500);
+  }, 10000);
 }
