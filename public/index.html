@@ -52,7 +52,7 @@
   <!-- Navbar 容器 -->
   <div id="navbar"></div>
 
-  <!-- 主內容 -->
+  <!-- 主內容容器 -->
   <div id="app">Loading...</div>
 
   <script type="module">
@@ -63,7 +63,7 @@
       signOut
     } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
-    // ✅ 匯入你自己定義的功能
+    // ✅ 匯入功能
     import { firebaseConfig, renderDashboard } from "./fundamental.js";
     import { renderLoginForm } from "./login.js";
 
@@ -76,24 +76,22 @@
     // ✅ 動態載入 Navbar
     function loadNavbar(user) {
       document.getElementById("navbar").innerHTML = `
-      <nav>
-        <div><a href="index.html">學習網站</a></div>
-        <div style="display:flex; align-items:center; gap:15px; padding-right:30px;">
-          <span id="datetime" style="font-size:0.9rem; color:#ccc;"></span>
-          <a href="Chatroom.html">聊天室</a>
+        <nav>
+          <div><a href="index.html">學習網站</a></div>
+          <div style="display:flex; align-items:center; gap:15px; padding-right:30px;">
+            <span id="datetime"></span>
+            <a href="chatroom.html">聊天室</a>
+            ${user ? `<button id="logoutBtn">登出</button>` : ""}
+          </div>
+        </nav>
+      `;
 
-          ${user ? `<button id="logoutBtn">登出</button>` : ""}
-        </div>
-      </nav>
-    `;
-
-
-      // 綁定登出按鈕
+      // 登出功能
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
           await signOut(auth);
-          window.location.href = "login.html";
+          window.location.href = "index.html";
         });
       }
 
@@ -115,10 +113,10 @@
       setInterval(updateDateTime, 1000);
     }
 
-    // ✅ 根據登入狀態更新畫面
+    // ✅ 根據登入狀態切換畫面
     onAuthStateChanged(auth, (user) => {
       console.log("Navbar 載入, 使用者:", user);
-      loadNavbar(user); // Navbar 永遠存在
+      loadNavbar(user);
       if (user) {
         renderDashboard(container, user);
       } else {

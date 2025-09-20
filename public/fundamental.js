@@ -21,14 +21,18 @@ export const db = getFirestore(app);
 
 // ✅ 登入後顯示功能選單
 export function renderDashboard(container, user) {
-  container.innerHTML = `<p>✅ 歡迎登入，${user.email}</p>`;
+  // 👉 從 sessionStorage 拿名字，沒有就用 email
+  const displayName = sessionStorage.getItem("name") || user.email;
+
+  container.innerHTML = `<p>✅ 歡迎登入，${displayName}</p>`;
 
   const features = [
     "錯題分析",
-    "自主學習",
+    "行事曆",
     "聯絡簿",
     "報到系統",
-    "教師請假"
+    "教師請假",
+    "假的按鈕"
   ];
 
   features.forEach((text) => {
