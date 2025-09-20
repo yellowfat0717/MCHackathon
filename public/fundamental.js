@@ -34,7 +34,6 @@ export function renderDashboard(container, user) {
     "聯絡簿",
     "報到系統",
     "教師請假",
-    "假的按鈕"
   ];
 
   features.forEach((text) => {
@@ -46,6 +45,13 @@ export function renderDashboard(container, user) {
       btn.onclick = () => {
         container.innerHTML = ""; // 清空畫面
         renderContactBook(container, user, db); // ✅ 把 db 傳進去
+      };
+    } else if (text === "行事曆") {
+      btn.onclick = async () => {
+        container.innerHTML = "";
+        // 🔑 動態載入 calendar.js
+        const { renderCalendar } = await import("./calendar.js");
+        renderCalendar(container, user);
       };
     } else {
       btn.onclick = () => alert(`👉 尚未實作：${text}`);
