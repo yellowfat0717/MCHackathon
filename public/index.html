@@ -66,57 +66,20 @@
     // ✅ 匯入功能
     import { firebaseConfig, renderDashboard } from "./fundamental.js";
     import { renderLoginForm } from "./login.js";
+    import { loadNavbar } from "./navbar.js";
+
 
     // ✅ 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
     const container = document.getElementById("app");
 
-    // ✅ 動態載入 Navbar
-    function loadNavbar(user) {
-      document.getElementById("navbar").innerHTML = `
-        <nav>
-          <div><a href="index.html">學習網站</a></div>
-          <div style="display:flex; align-items:center; gap:15px; padding-right:30px;">
-            <span id="datetime"></span>
-            <a href="chatroom.html">聊天室</a>
-            ${user ? `<button id="logoutBtn">登出</button>` : ""}
-          </div>
-        </nav>
-      `;
-
-      // 登出功能
-      const logoutBtn = document.getElementById("logoutBtn");
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-          await signOut(auth);
-          window.location.href = "index.html";
-        });
-      }
-
-      // ✅ 每秒更新日期時間
-      function updateDateTime() {
-        const now = new Date();
-        const formatted = now.toLocaleString("zh-TW", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        });
-        const datetimeEl = document.getElementById("datetime");
-        if (datetimeEl) datetimeEl.textContent = formatted;
-      }
-      updateDateTime();
-      setInterval(updateDateTime, 1000);
-    }
 
     // ✅ 根據登入狀態切換畫面
     onAuthStateChanged(auth, (user) => {
       console.log("Navbar 載入, 使用者:", user);
-      loadNavbar(user);
+      loadNavbar(auth, user);
+
       if (user) {
         renderDashboard(container, user);
       } else {
