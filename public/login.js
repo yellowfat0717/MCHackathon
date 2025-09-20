@@ -7,7 +7,9 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  setPersistence,
+  browserSessionPersistence
 } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
 
 // ✅ 引入 firebaseConfig 與 renderDashboard 方法
@@ -16,6 +18,16 @@ import { firebaseConfig, renderDashboard } from "./fundamental.js";
 // ✅ 初始化 Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// ✅ 設定持久性為「session」
+// 👉 使用者關掉分頁或 Ctrl+F5 強制刷新，就會自動登出
+setPersistence(auth, browserSessionPersistence)
+  .then(() => {
+    console.log("✅ 登入狀態只會在這次瀏覽器 session 保存");
+  })
+  .catch((err) => {
+    console.error("❌ 設定持久性失敗：", err);
+  });
 
 // ✅ 監聽使用者登入狀態
 onAuthStateChanged(auth, (user) => {
@@ -58,6 +70,7 @@ function renderLoginForm(container) {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      sessionStorage.setItem("role", role); // ✅ 用 sessionStorage 存角色
       resultEl.textContent = `✅ 登入成功（${role}）`;
       resultEl.style.color = "green";
     } catch (err) {
@@ -80,6 +93,7 @@ function renderLoginForm(container) {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      sessionStorage.setItem("role", role); // ✅ 用 sessionStorage 存角色
       resultEl.textContent = `✅ Google 登入成功：${user.email}，身分：${role}`;
       resultEl.style.color = "green";
     } catch (err) {
@@ -88,4 +102,5 @@ function renderLoginForm(container) {
     }
   });
 }
+
 export { renderLoginForm };

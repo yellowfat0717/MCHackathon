@@ -1,10 +1,8 @@
 // ContactBook.js
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { renderDashboard } from "./fundamental.js"; // 🔁 加這行讓返回首頁功能可用
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import { renderDashboard } from "./fundamental.js";
 
-const db = getFirestore(getApp());
-
+// ✅ 不再自己初始化 Firebase，db 由外部傳進來
 export default async function renderContactBook(container, user, db) {
   container.innerHTML = "";
 
@@ -12,21 +10,21 @@ export default async function renderContactBook(container, user, db) {
   backBtn.textContent = "🏠 回首頁";
   backBtn.className = "btn";
   backBtn.onclick = () => {
-    renderDashboard(container, user); // 不 reload，直接回首頁
+    renderDashboard(container, user); // 回首頁
   };
   container.appendChild(backBtn);
 
-  const role = localStorage.getItem("role");
+  const role = sessionStorage.getItem("role");
 
   if (role === "teacher") {
-    renderTeacherView(container, user);
+    renderTeacherView(container, user, db);
   } else {
-    renderStudentParentView(container, user);
+    renderStudentParentView(container, user, db);
   }
 }
 
 // 👨‍🏫 教師畫面
-function renderTeacherView(container, user) {
+function renderTeacherView(container, user, db) {
   const wrapper = document.createElement("div");
 
   const title = document.createElement("h2");
@@ -72,7 +70,7 @@ function renderTeacherView(container, user) {
 }
 
 // 👨‍👩‍👧 家長／學生畫面
-async function renderStudentParentView(container, user) {
+async function renderStudentParentView(container, user, db) {
   const today = new Date().toISOString().split("T")[0];
   const docRef = doc(db, "contactBooks", today);
   const docSnap = await getDoc(docRef);

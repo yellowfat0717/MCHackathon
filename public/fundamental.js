@@ -1,11 +1,9 @@
 // fundamental.js
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-storage.js";
-import renderContactBook from "./ContactBook.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-// ✅ 共用 Firebase 設定（給 login.js 使用）
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+import renderContactBook from "./ContactBook.js";
+
+// ✅ Firebase 設定
 export const firebaseConfig = {
   apiKey: "AIzaSyBjiZf6SXQpbXtZsWzefNQmh9gQKtIxM4k",
   authDomain: "mchackathon-36970.firebaseapp.com",
@@ -17,8 +15,12 @@ export const firebaseConfig = {
   measurementId: "G-FGQYWXTKE0"
 };
 
-// ✅ 登入後顯示功能選擇頁面
-export function renderDashboard(container, user, db) {
+// ✅ 初始化 Firebase（只做一次）
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+
+// ✅ 登入後顯示功能選單
+export function renderDashboard(container, user) {
   container.innerHTML = `<p>✅ 歡迎登入，${user.email}</p>`;
 
   const features = [
@@ -37,7 +39,7 @@ export function renderDashboard(container, user, db) {
     if (text === "聯絡簿") {
       btn.onclick = () => {
         container.innerHTML = ""; // 清空畫面
-        renderContactBook(container, user); // ✅ 載入聯絡簿功能
+        renderContactBook(container, user, db); // ✅ 把 db 傳進去
       };
     } else {
       btn.onclick = () => alert(`👉 尚未實作：${text}`);
