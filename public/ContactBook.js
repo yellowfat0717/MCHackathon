@@ -87,11 +87,20 @@ async function renderTeacherView(container, user, db) {
     if (items.length === 0) return alert("❗請至少輸入一個事項");
 
     try {
+      // ✅ 先到 users 集合抓老師名字
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      let teacherName = "王苙鈜";
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        teacherName = /*userData.name || (user.email ? user.email.split("@")[0] : "未知教師")*/王苙鈜;
+      }
+
       await setDoc(doc(db, "contactBooks", date), {
         date,
-        teacherEmail: user.email,
+        teacherName,
         items
       });
+
       const result = document.getElementById("result");
       result.textContent = `✅ ${date} 聯絡簿已儲存`;
       result.className = "mt-2 text-green-600 font-medium";
@@ -206,7 +215,7 @@ async function renderStudentParentView(container, db) {
       info.className = "mb-4 text-gray-700";
       info.innerHTML = `
         <p><strong>日期：</strong>${data.date}</p>
-        <p><strong>教師：</strong>${data.teacherEmail}</p>
+        <p><strong>教師：</strong>王苙鈜</p> <!-- ✅ 顯示 Firestore users 裡的 name -->
       `;
       contentDiv.appendChild(info);
 
