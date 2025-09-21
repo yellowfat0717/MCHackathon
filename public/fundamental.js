@@ -44,11 +44,11 @@ export function renderDashboard(container, user) {
   const featureButtons = document.getElementById("featureButtons");
 
   const features = [
-    "線上家教系統",
-    "行事曆",
-    "聯絡簿",
-    "報到系統",
-    "教師請假",
+    "皮卡小老師",
+    "RemindU",
+    "LinkBook",
+    "安心到",
+    "CoverMe",
     "點數兌換" // ⭐ 新增
   ];
 
@@ -58,18 +58,18 @@ export function renderDashboard(container, user) {
       "w-full bg-indigo-500 text-white font-medium py-3 px-4 rounded-lg shadow hover:bg-indigo-600 transition";
     btn.textContent = text;
 
-    if (text === "聯絡簿") {
+    if (text === "LinkBook") {
       btn.onclick = () => {
         container.innerHTML = "";
         renderContactBook(container, user, db);
       };
-    } else if (text === "行事曆") {
+    } else if (text === "RemindU") {
       btn.onclick = async () => {
         container.innerHTML = "";
         const { renderCalendar } = await import("./calendar.js");
         renderCalendar(container, user);
       };
-    } else if (text === "線上家教系統") {
+    } else if (text === "皮卡小老師") {
       btn.onclick = () => {
         container.innerHTML = "";
         renderTutor(container, db, user);
