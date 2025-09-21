@@ -13,7 +13,7 @@ export default function renderTutor(container, user) {
       <div class="max-w-3xl mx-auto w-full bg-white shadow-lg rounded-xl p-6 flex flex-col flex-1">
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold text-gray-800">🎓 線上家教系統</h2>
+          <h2 class="text-2xl font-bold text-gray-800">🎓 皮卡小老師</h2>
           <button id="backBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">🏠 返回首頁</button>
         </div>
 

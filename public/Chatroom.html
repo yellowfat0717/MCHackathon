@@ -3,43 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <title>聊天室</title>
-  <style>
-    body { font-family: "Noto Sans TC", sans-serif; margin: 0; padding: 0; }
-    #messages { height: 60vh; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin: 20px; }
-    .message { margin: 5px 0; }
-    .me { text-align: right; color: blue; }
-    .other { text-align: left; color: green; }
-    #chatControls { margin: 20px; }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <!-- Navbar -->
-  <div id="navbar"></div>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 flex flex-col font-sans">
 
-  <h2 style="margin:20px;">📩 私密聊天室</h2>
-
-  <div id="chatControls">
-    <label for="userSelect">選擇聊天對象：</label>
-    <select id="userSelect"></select>
-    <button id="startChatBtn">開始聊天</button>
+  <!-- 🔵 Navbar -->
+  <div class="bg-gradient-to-r from-purple-700 to-blue-500 text-white px-6 py-3 flex justify-between items-center shadow">
+    <div class="flex items-center gap-4 font-bold">
+      <span>📚 學習網站</span>
+      <a href="index.html" class="hover:underline">🏠 回首頁</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <span id="currentTime"></span>
+      <span id="userInfo" class="bg-white/20 px-3 py-1 rounded-full text-sm">👤 使用者 (role)</span>
+      <button class="underline font-bold">💬 聊天室</button>
+      <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">登出</button>
+    </div>
   </div>
 
-  <div id="messages"></div>
+  <!-- 🟦 聊天卡片 -->
+  <div class="flex-1 flex justify-center items-center p-6">
+    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-3xl flex flex-col">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 私密聊天室</h2>
+      <p id="userRole" class="text-gray-600 mb-4">👤 使用者（角色）</p>
 
-  <div id="inputArea" style="margin:20px;">
-    <input id="msgInput" type="text" placeholder="輸入訊息..." />
-    <button id="sendBtn">送出</button>
+      <!-- 選擇聊天對象 -->
+      <div id="chatControls" class="flex items-center gap-3 mb-4">
+        <label for="userSelect" class="text-gray-700">選擇聊天對象：</label>
+        <select id="userSelect" class="px-3 py-2 border rounded-lg flex-1"></select>
+        <button id="startChatBtn" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">開始聊天</button>
+      </div>
+
+      <!-- 聊天標題 -->
+      <div id="chatHeader" class="font-semibold text-gray-700 mb-2 hidden"></div>
+
+      <!-- 📌 聊天紀錄 (固定高度，可滑動) -->
+      <div id="messages" class="border rounded-lg p-4 mb-2 bg-gray-50 h-[400px] overflow-y-auto"></div>
+      <div id="typingIndicator" class="text-sm text-gray-500 italic mb-2 hidden">對方正在輸入中… ✍</div>
+
+      <!-- 輸入區 -->
+      <div id="inputArea" class="flex items-center gap-3">
+        <textarea id="msgInput" rows="1" placeholder="輸入訊息..."
+          class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none resize-none"></textarea>
+        <button id="sendBtn" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600">送出</button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
     import {
-      getFirestore, collection, getDocs, doc, getDoc, setDoc, onSnapshot
+      getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
     import { firebaseConfig } from "./fundamental.js";
-    import { loadNavbar } from "./navbar.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -50,20 +68,61 @@
     const messagesDiv = document.getElementById("messages");
     const msgInput = document.getElementById("msgInput");
     const sendBtn = document.getElementById("sendBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const chatHeader = document.getElementById("chatHeader");
+    const typingIndicator = document.getElementById("typingIndicator");
+
+    const timeEl = document.getElementById("currentTime");
+    const userInfo = document.getElementById("userInfo");
+    const userRoleDisplay = document.getElementById("userRole");
 
     let currentChatRef = null;
     let currentUser = null;
     let currentPartner = null;
+    let partnerName = null;
+
+    function formatTime(isoStr) {
+      const d = new Date(isoStr);
+      return d.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function formatDateDivider(isoStr) {
+      const d = new Date(isoStr);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+
+      if (d.toDateString() === today.toDateString()) return "今天";
+      if (d.toDateString() === yesterday.toDateString()) return "昨天";
+      return `${d.getMonth() + 1}月${d.getDate()}日`;
+    }
+
+    // ⏰ 顯示時間
+    function updateClock() {
+      const now = new Date();
+      timeEl.textContent = now.toLocaleString("zh-TW", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
     // ✅ 登入狀態
     onAuthStateChanged(auth, async (user) => {
-      loadNavbar(auth, user);
       if (!user) {
         alert("請先登入！");
         window.location.href = "index.html";
         return;
       }
       currentUser = user;
+
+      // 🔹 從 sessionStorage 拿名字和角色
+      const displayName = sessionStorage.getItem("name") || user.displayName || user.email;
+      const role = sessionStorage.getItem("role") || "未設定角色";
+
+      userInfo.textContent = `👤 ${displayName}（${role}）`;
+      userRoleDisplay.textContent = `👤 ${displayName}（${role}）`;
 
       // 讀取所有使用者清單 (排除自己)
       const snapshot = await getDocs(collection(db, "users"));
@@ -73,40 +132,81 @@
           const option = document.createElement("option");
           option.value = data.email;
           option.textContent = `${data.name || data.email} (${data.role})`;
+          option.dataset.name = data.name || data.email;
           userSelect.appendChild(option);
         }
       });
+
+      // 🔔 啟用桌面通知權限
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
     });
+
+    // ✅ 登出
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
 
     // ✅ 開始聊天
     startChatBtn.onclick = () => {
       const partnerEmail = userSelect.value;
       if (!partnerEmail) return alert("請先選擇聊天對象！");
       currentPartner = partnerEmail;
+      partnerName = userSelect.selectedOptions[0].dataset.name;
+
+      chatHeader.classList.remove("hidden");
+      chatHeader.textContent = `與 ${partnerName} 的聊天`;
 
       const chatId = [currentUser.email, partnerEmail].sort().join("_");
       currentChatRef = doc(db, "chats", chatId);
 
-      // 監聽訊息
       onSnapshot(currentChatRef, (snap) => {
         if (snap.exists()) {
           const data = snap.data();
           messagesDiv.innerHTML = "";
+
+          let lastDate = null;
           data.messages.forEach(m => {
+            const msgDate = new Date(m.timestamp).toDateString();
+            if (lastDate !== msgDate) {
+              const divider = document.createElement("div");
+              divider.className = "text-center text-gray-400 text-sm my-2";
+              divider.textContent = formatDateDivider(m.timestamp);
+              messagesDiv.appendChild(divider);
+              lastDate = msgDate;
+            }
             const div = document.createElement("div");
-            div.className = "message " + (m.sender === currentUser.name ? "me" : "other");
-            div.textContent = `${m.sender}: ${m.text}`;
+            div.className = "flex flex-col " + (m.sender === currentUser.email ? "items-end" : "items-start");
+            div.innerHTML = `
+              <div class="px-4 py-2 rounded-lg max-w-[70%] ${m.sender === currentUser.email
+                ? "bg-green-500 text-white rounded-br-sm"
+                : "bg-white border text-gray-800 rounded-bl-sm"}">${m.text}</div>
+              <div class="text-xs text-gray-500 mt-1">${formatTime(m.timestamp)}</div>
+            `;
             messagesDiv.appendChild(div);
+
+            // 🔔 新訊息通知（僅限對方 & 頁面不在前景）
+            if (m.sender !== currentUser.email && document.hidden && "Notification" in window && Notification.permission === "granted") {
+              new Notification(`📩 ${partnerName} 傳來新訊息`, {
+                body: m.text,
+                icon: "https://cdn-icons-png.flaticon.com/512/2333/2333009.png"
+              }).onclick = () => window.focus();
+            }
           });
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+          // 🔹 顯示「對方輸入中」
+          typingIndicator.classList.toggle("hidden", !(data.typing && data.typing === currentPartner));
         } else {
-          messagesDiv.innerHTML = "<p style='color:gray'>目前沒有訊息，開始聊天吧！</p>";
+          messagesDiv.innerHTML = "<p class='text-gray-400 text-center'>目前沒有訊息，開始聊天吧！</p>";
         }
       });
     };
 
     // ✅ 送出訊息
-    sendBtn.onclick = async () => {
+    async function sendMessage() {
       if (!currentChatRef || !currentPartner) return alert("請先選擇聊天對象！");
       const text = msgInput.value.trim();
       if (!text) return;
@@ -116,7 +216,6 @@
       if (snap.exists()) {
         messages = snap.data().messages || [];
       }
-
       messages.push({
         sender: currentUser.email,
         text,
@@ -125,10 +224,32 @@
 
       await setDoc(currentChatRef, {
         participants: [currentUser.email, currentPartner],
-        messages
+        messages,
+        typing: null
       });
       msgInput.value = "";
-    };
+    }
+
+    sendBtn.onclick = sendMessage;
+
+    // ✅ Enter 送出 / Shift+Enter 換行
+    msgInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ✅ 偵測輸入中
+    msgInput.addEventListener("input", async () => {
+      if (!currentChatRef) return;
+      await updateDoc(currentChatRef, { typing: currentUser.email });
+      setTimeout(async () => {
+        if (msgInput.value.trim() === "") {
+          await updateDoc(currentChatRef, { typing: null });
+        }
+      }, 1500);
+    });
   </script>
 </body>
 </html>

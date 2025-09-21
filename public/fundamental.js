@@ -47,9 +47,9 @@ export function renderDashboard(container, user) {
     "皮卡小老師",
     "RemindU",
     "LinkBook",
-    "安心到",
+    "安心到",     // ⭐ 新增
     "CoverMe",
-    "點數兌換" // ⭐ 新增
+    "點數兌換"
   ];
 
   features.forEach((text) => {
@@ -76,7 +76,6 @@ export function renderDashboard(container, user) {
       };
     } else if (text === "點數兌換") {
       btn.onclick = () => {
-        // ⭐ 直接顯示商城畫面（Demo 無功能）
         container.innerHTML = `
           <div class="min-h-screen bg-gradient-to-br from-yellow-100 to-orange-200 flex flex-col items-center justify-start pt-24 px-6">
             <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-2xl text-center">
@@ -99,7 +98,6 @@ export function renderDashboard(container, user) {
                 </div>
               </div>
 
-              <!-- 返回按鈕 -->
               <div class="mt-6">
                 <button id="backBtn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
                   ⬅ 返回功能選單
@@ -108,15 +106,34 @@ export function renderDashboard(container, user) {
             </div>
           </div>
         `;
+        document.getElementById("backBtn").onclick = () => renderDashboard(container, user);
+      };
+    } else if (text === "安心到") {
+      btn.onclick = () => {
+        container.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-green-100 to-emerald-200 flex flex-col items-center justify-start pt-24 px-6">
+            <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-2xl text-center">
+              <h2 class="text-2xl font-bold text-gray-800 mb-4">✅ 安心到 - 學生到校回報</h2>
+              <p class="text-gray-600 mb-6">👤 ${user.displayName || user.email}</p>
 
-        // 返回 Dashboard
-        const backBtn = document.getElementById("backBtn");
-        if (backBtn) {
-          backBtn.onclick = () => {
-            container.innerHTML = "";
-            renderDashboard(container, user);
-          };
-        }
+              <div class="space-y-4">
+                <button class="w-full bg-green-500 text-white font-medium py-3 px-4 rounded-lg shadow hover:bg-green-600 transition">
+                  📍 我要簽到
+                </button>
+                <button class="w-full bg-yellow-500 text-white font-medium py-3 px-4 rounded-lg shadow hover:bg-yellow-600 transition">
+                  🔍 查看簽到紀錄
+                </button>
+              </div>
+
+              <div class="mt-6">
+                <button id="backBtn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                  ⬅ 返回功能選單
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("backBtn").onclick = () => renderDashboard(container, user);
       };
     } else {
       btn.onclick = () => alert(`👉 尚未實作：${text}`);

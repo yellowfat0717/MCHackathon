@@ -89,10 +89,10 @@ async function renderTeacherView(container, user, db) {
     try {
       // ✅ 先到 users 集合抓老師名字
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      let teacherName = "王苙鈜";
+      let teacherName = "未知教師";
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        teacherName = /*userData.name || (user.email ? user.email.split("@")[0] : "未知教師")*/王苙鈜;
+        teacherName = userData.name || (user.email ? user.email.split("@")[0] : "未知教師");
       }
 
       await setDoc(doc(db, "contactBooks", date), {
@@ -215,7 +215,7 @@ async function renderStudentParentView(container, db) {
       info.className = "mb-4 text-gray-700";
       info.innerHTML = `
         <p><strong>日期：</strong>${data.date}</p>
-        <p><strong>教師：</strong>王苙鈜</p> <!-- ✅ 顯示 Firestore users 裡的 name -->
+        <p><strong>教師：</strong>${data.teacherName}</p> <!-- ✅ 顯示 Firestore users 裡的 name -->
       `;
       contentDiv.appendChild(info);
 
