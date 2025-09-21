@@ -4,78 +4,85 @@ import { renderDashboard } from "./fundamental.js";
 
 // ✅ 主入口
 export default async function renderContactBook(container, user, db) {
-  container.innerHTML = "";
+  container.innerHTML = `
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+      <div class="max-w-4xl mx-auto">
+        <button id="backBtn" class="mb-6 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition">🏠 回首頁</button>
+        <div id="contactBookWrapper"></div>
+      </div>
+    </div>
+  `;
 
-  // 回首頁按鈕
-  const backBtn = document.createElement("button");
-  backBtn.textContent = "🏠 回首頁";
-  backBtn.className = "btn";
-  backBtn.onclick = () => renderDashboard(container, user);
-  container.appendChild(backBtn);
+  document.getElementById("backBtn").onclick = () => renderDashboard(container, user);
 
   const role = sessionStorage.getItem("role");
+  const wrapper = document.getElementById("contactBookWrapper");
 
   if (role === "teacher") {
-    renderTeacherView(container, user, db);
+    renderTeacherView(wrapper, user, db);
   } else {
-    renderStudentParentView(container, db);
+    renderStudentParentView(wrapper, db);
   }
 }
 
 // 👨‍🏫 教師畫面
-function renderTeacherView(container, user, db) {
-  const wrapper = document.createElement("div");
+async function renderTeacherView(container, user, db) {
+  container.innerHTML = `
+    <div class="bg-white shadow-lg rounded-xl p-6 mb-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">👨‍🏫 教師聯絡簿管理</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-gray-600 mb-1">日期</label>
+          <input type="date" id="dateInput" value="${new Date().toISOString().split("T")[0]}"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"/>
+        </div>
+        <div id="itemContainer" class="space-y-2"></div>
+        <button id="addItemBtn" class="bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">➕ 新增事項</button>
+        <button id="submitBtn" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600">📤 儲存</button>
+        <p id="result" class="mt-2 text-sm"></p>
+      </div>
+    </div>
 
-  const title = document.createElement("h2");
-  title.textContent = "👨‍🏫 教師聯絡簿填寫";
-  wrapper.appendChild(title);
+    <div class="bg-white shadow-lg rounded-xl p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">📅 歷史紀錄</h3>
+      <select id="historySelect" class="mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"></select>
+      <div id="historyContent" class="space-y-3"></div>
+    </div>
+  `;
 
-  // 日期選擇
-  const dateInput = document.createElement("input");
-  dateInput.type = "date";
-  dateInput.value = new Date().toISOString().split("T")[0];
-  wrapper.appendChild(dateInput);
+  const itemContainer = document.getElementById("itemContainer");
 
-  // 事項容器
-  const itemContainer = document.createElement("div");
-  wrapper.appendChild(itemContainer);
+  function addItemField(value = "", done = false) {
+    const div = document.createElement("div");
+    div.className = "flex items-center space-x-2";
 
-  // 新增一個事項欄位
-  function addItemField(value = "") {
     const input = document.createElement("input");
     input.type = "text";
-    input.className = "input";
+    input.className = "flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none";
     input.placeholder = "輸入事項";
     input.value = value;
-    itemContainer.appendChild(input);
+
+    const chk = document.createElement("input");
+    chk.type = "checkbox";
+    chk.checked = done;
+
+    div.appendChild(input);
+    div.appendChild(chk);
+    itemContainer.appendChild(div);
   }
 
   // 預設一個輸入框
   addItemField();
 
-  // 新增事項按鈕
-  const addItemBtn = document.createElement("button");
-  addItemBtn.textContent = "➕ 新增事項";
-  addItemBtn.className = "btn";
-  addItemBtn.onclick = () => addItemField();
-  wrapper.appendChild(addItemBtn);
+  document.getElementById("addItemBtn").onclick = () => addItemField();
 
-  // 送出按鈕
-  const submitBtn = document.createElement("button");
-  submitBtn.textContent = "📤 送出";
-  submitBtn.className = "btn";
-  wrapper.appendChild(submitBtn);
-
-  const result = document.createElement("p");
-  wrapper.appendChild(result);
-
-  // 送出事件
-  submitBtn.onclick = async () => {
-    const date = dateInput.value;
-    const items = [...itemContainer.querySelectorAll("input")]
-      .map(i => i.value.trim())
-      .filter(v => v)
-      .map(text => ({ text, done: false })); // 每個事項預設未完成
+  document.getElementById("submitBtn").onclick = async () => {
+    const date = document.getElementById("dateInput").value;
+    const items = [...itemContainer.querySelectorAll("div")].map(div => {
+      const input = div.querySelector("input[type=text]");
+      const chk = div.querySelector("input[type=checkbox]");
+      return { text: input.value.trim(), done: chk.checked };
+    }).filter(i => i.text);
 
     if (items.length === 0) return alert("❗請至少輸入一個事項");
 
@@ -85,48 +92,107 @@ function renderTeacherView(container, user, db) {
         teacherEmail: user.email,
         items
       });
+      const result = document.getElementById("result");
       result.textContent = `✅ ${date} 聯絡簿已儲存`;
-      result.style.color = "green";
+      result.className = "mt-2 text-green-600 font-medium";
+      loadHistory(); // 儲存後更新歷史紀錄
     } catch (err) {
+      const result = document.getElementById("result");
       result.textContent = "❌ 儲存失敗：" + err.message;
-      result.style.color = "red";
+      result.className = "mt-2 text-red-600 font-medium";
     }
   };
 
-  container.appendChild(wrapper);
+  // 📜 歷史紀錄
+  async function loadHistory() {
+    const snapshot = await getDocs(collection(db, "contactBooks"));
+    const dates = snapshot.docs.map(doc => doc.id).sort().reverse();
+
+    const select = document.getElementById("historySelect");
+    const contentDiv = document.getElementById("historyContent");
+    select.innerHTML = "";
+    contentDiv.innerHTML = "";
+
+    if (dates.length === 0) {
+      contentDiv.innerHTML = `<p class="text-gray-500">⚠️ 尚無歷史紀錄。</p>`;
+      return;
+    }
+
+    dates.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d;
+      opt.textContent = d;
+      select.appendChild(opt);
+    });
+
+    async function showHistory(date) {
+      const docRef = doc(db, "contactBooks", date);
+      const docSnap = await getDoc(docRef);
+      contentDiv.innerHTML = "";
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+
+        const list = document.createElement("ul");
+        list.className = "space-y-2";
+
+        data.items.forEach(item => {
+          const li = document.createElement("li");
+          li.className = "px-4 py-2 bg-gray-50 rounded-lg flex justify-between";
+          li.textContent = item.text + (item.done ? " ✅" : "");
+          list.appendChild(li);
+        });
+
+        contentDiv.appendChild(list);
+
+        // 👉 載入到編輯區
+        const loadBtn = document.createElement("button");
+        loadBtn.textContent = "✏ 載入到編輯區";
+        loadBtn.className = "mt-3 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600";
+        loadBtn.onclick = () => {
+          document.getElementById("dateInput").value = data.date;
+          itemContainer.innerHTML = "";
+          data.items.forEach(it => addItemField(it.text, it.done));
+        };
+        contentDiv.appendChild(loadBtn);
+      } else {
+        contentDiv.innerHTML = `<p class="text-red-500">⚠️ 此日期無資料。</p>`;
+      }
+    }
+
+    showHistory(select.value);
+    select.onchange = () => showHistory(select.value);
+  }
+
+  loadHistory();
 }
 
 // 👨‍👩‍👧 學生／家長畫面
 async function renderStudentParentView(container, db) {
-  const wrapper = document.createElement("div");
+  container.innerHTML = `
+    <div class="bg-white shadow-lg rounded-xl p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">📘 聯絡簿內容</h2>
+      <select id="dateSelect" class="mb-4 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"></select>
+      <div id="contactContent"></div>
+    </div>
+  `;
 
-  const title = document.createElement("h2");
-  title.textContent = "📘 聯絡簿內容";
-  wrapper.appendChild(title);
-
-  // 抓所有日期
   const snapshot = await getDocs(collection(db, "contactBooks"));
   const dates = snapshot.docs.map(doc => doc.id).sort().reverse();
+  const select = document.getElementById("dateSelect");
+  const contentDiv = document.getElementById("contactContent");
 
   if (dates.length === 0) {
-    wrapper.appendChild(document.createTextNode("⚠️ 目前尚無聯絡簿內容。"));
-    container.appendChild(wrapper);
+    contentDiv.innerHTML = `<p class="text-gray-500">⚠️ 目前尚無聯絡簿內容。</p>`;
     return;
   }
 
-  // 日期選單
-  const select = document.createElement("select");
   dates.forEach(d => {
     const opt = document.createElement("option");
     opt.value = d;
     opt.textContent = d;
     select.appendChild(opt);
   });
-  wrapper.appendChild(select);
-
-  // 顯示區域
-  const contentDiv = document.createElement("div");
-  wrapper.appendChild(contentDiv);
 
   async function loadContactBook(date) {
     const docRef = doc(db, "contactBooks", date);
@@ -136,36 +202,38 @@ async function renderStudentParentView(container, db) {
     if (docSnap.exists()) {
       const data = docSnap.data();
 
-      // 顯示基本資訊
-      const info = document.createElement("p");
-      info.innerHTML = `<strong>日期：</strong>${data.date}<br>
-                        <strong>教師：</strong>${data.teacherEmail}`;
+      const info = document.createElement("div");
+      info.className = "mb-4 text-gray-700";
+      info.innerHTML = `
+        <p><strong>日期：</strong>${data.date}</p>
+        <p><strong>教師：</strong>${data.teacherEmail}</p>
+      `;
       contentDiv.appendChild(info);
 
-      // 顯示事項清單
       const list = document.createElement("ul");
+      list.className = "space-y-3";
+
       data.items.forEach((item, idx) => {
         const li = document.createElement("li");
+        li.className = "flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg";
 
         const text = document.createElement("span");
         text.textContent = item.text;
         if (item.done) {
-          text.style.textDecoration = "line-through";
-          text.style.color = "green";
+          text.className = "line-through text-green-600";
         }
         li.appendChild(text);
 
-        // 完成按鈕
         if (!item.done) {
           const btn = document.createElement("button");
-          btn.className = "btn";
+          btn.className = "bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm";
           btn.textContent = "✔ 標記完成";
           btn.onclick = async () => {
             try {
               const updatedItems = [...data.items];
-              updatedItems[idx].done = true; // 標記完成
+              updatedItems[idx].done = true;
               await setDoc(docRef, { ...data, items: updatedItems });
-              loadContactBook(date); // 重新載入
+              loadContactBook(date);
             } catch (err) {
               alert("❌ 更新失敗：" + err.message);
             }
@@ -173,23 +241,20 @@ async function renderStudentParentView(container, db) {
           li.appendChild(btn);
         } else {
           const doneLabel = document.createElement("span");
-          doneLabel.textContent = " ✅ 已完成";
+          doneLabel.className = "text-green-600 font-medium";
+          doneLabel.textContent = "✅ 已完成";
           li.appendChild(doneLabel);
         }
 
         list.appendChild(li);
       });
-      contentDiv.appendChild(list);
 
+      contentDiv.appendChild(list);
     } else {
-      contentDiv.textContent = "⚠️ 此日期無聯絡簿內容。";
+      contentDiv.innerHTML = `<p class="text-red-500">⚠️ 此日期無聯絡簿內容。</p>`;
     }
   }
 
-  // 預設載入第一個日期
   loadContactBook(select.value);
   select.onchange = () => loadContactBook(select.value);
-
-  container.appendChild(wrapper);
 }
-
